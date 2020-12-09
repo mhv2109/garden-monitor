@@ -9,5 +9,8 @@
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "cmake.configureOnOpen": false,
-  "idf.port": "/dev/cu.usbserial-0001"
+  "idf.port": "/dev/cu.usbserial-0001",
+  "files.associations": {
+    "esp_wifi.h": "c"
+  }
 }
