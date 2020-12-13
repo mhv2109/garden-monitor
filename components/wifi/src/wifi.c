@@ -75,8 +75,10 @@ wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, voi
 static esp_err_t
 connect_persisted_config(void)
 {
-	wifi_config_t config = nvs__get_wifi_config();
+	wifi_config_t config;
 	esp_err_t err;
+
+	nvs__get_wifi_config(&config);
 	
 	if ((err = wifi__connect_with_config(&config)) == ESP_OK) {
 		ESP_LOGI(TAG, "WiFi connected using persisted credentials");

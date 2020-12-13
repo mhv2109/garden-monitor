@@ -19,109 +19,120 @@ static const char *WIFI_BSSID = "bssid";
 #define PASS_LEN 64
 #define BSSID_LEN 6 
 
-static char *get_wifi_ssid(void);
-static char *get_wifi_pass(void);
-static int8_t get_wifi_bssid_set(void);
-static char *get_wifi_bssid(void);
-static void set_wifi_ssid(char*);
-static void set_wifi_pass(char*);
-static void set_wifi_bssid_set(int8_t);
-static void set_wifi_bssid(char*);
+static bool get_wifi_ssid(char*);
+static bool get_wifi_pass(char*);
+static bool get_wifi_bssid_set(int8_t*);
+static bool get_wifi_bssid(char*);
+static bool set_wifi_ssid(char*);
+static bool set_wifi_pass(char*);
+static bool set_wifi_bssid_set(int8_t);
+static bool set_wifi_bssid(char*);
 
-void
+bool
 nvs__set_wifi_config(wifi_config_t *config)
 {
-  char ssid[SSID_LEN+1] = {0};
-  memcpy(ssid, config->sta.ssid, sizeof(config->sta.ssid));
-  set_wifi_ssid(ssid);
+	char ssid[SSID_LEN+1] = {0};
+	memcpy(ssid, config->sta.ssid, sizeof(config->sta.ssid));
+	if (!set_wifi_ssid(ssid))
+		return false;
 
-  char pass[PASS_LEN+1] = {0};
-  memcpy(pass, config->sta.password, sizeof(config->sta.password));
-  set_wifi_pass(pass);
+	char pass[PASS_LEN+1] = {0};
+	memcpy(pass, config->sta.password, sizeof(config->sta.password));
+	if (!set_wifi_pass(pass))
+		return false;
+	
+	if (!set_wifi_bssid_set((int8_t) config->sta.bssid_set))
+		return false;
 
-  set_wifi_bssid_set((int8_t) config->sta.bssid_set);
-  if (config->sta.bssid_set) {
-    char bssid[BSSID_LEN+1] = {0};
-    memcpy(bssid, config->sta.bssid, sizeof(config->sta.bssid));
-    set_wifi_bssid(bssid);
-  }
+	if (config->sta.bssid_set) {
+		char bssid[BSSID_LEN+1] = {0};
+		memcpy(bssid, config->sta.bssid, sizeof(config->sta.bssid));
+		if (!set_wifi_bssid(bssid))
+			return false;
+	}
+
+	return true; 
 }
 
-wifi_config_t
-nvs__get_wifi_config(void)
+bool
+nvs__get_wifi_config(wifi_config_t *config)
 {
-  wifi_config_t config;
-  bzero(&config, sizeof(wifi_config_t));
+	bzero(config, sizeof(wifi_config_t));
 
-  char *ssid = get_wifi_ssid();
-  if (ssid != NULL) {
-    memcpy(config.sta.ssid, ssid, SSID_LEN);
-  }
-  free(ssid);
+	char ssid[SSID_LEN+1];
+	if (get_wifi_ssid(ssid)) 
+		memcpy(config->sta.ssid, ssid, SSID_LEN);
+	else 
+		return false;
 
-  char *pw = get_wifi_pass();
-  if (pw != NULL) {
-    memcpy(config.sta.password, pw, PASS_LEN);
-  }
-  free(pw);
-  
-  int8_t bs = get_wifi_bssid_set();
-  if (bs > 0) {
-    config.sta.bssid_set = true;
-    char *bssid = get_wifi_bssid();
-    if (bssid != NULL) {
-      memcpy(config.sta.bssid, bssid, BSSID_LEN);
-    }
-    free(bssid);
-  }
+	char pw[PASS_LEN+1];
+	if (get_wifi_pass(pw))
+		memcpy(config->sta.password, pw, PASS_LEN);
+	else
+		return false;	
 
-  return config;
+	int8_t bs;
+	if (get_wifi_bssid_set(&bs)) {
+		if (bs > 0) {
+			config->sta.bssid_set = true;
+
+			char bssid[BSSID_LEN+1];
+			if (get_wifi_bssid(bssid))
+				memcpy(config->sta.bssid, bssid, BSSID_LEN);
+			else
+				return false;	
+		}
+	} else {
+		return false;
+	}
+
+	return true;
 }
 
-static char*
-get_wifi_ssid(void)
+static bool
+get_wifi_ssid(char *ssid)
 {
-  return read_string(WIFI_NS, WIFI_SSID); 
+	return read_string(WIFI_NS, WIFI_SSID, ssid); 
 }
 
-static char*
-get_wifi_pass(void)
+static bool
+get_wifi_pass(char *pass)
 {
-  return read_string(WIFI_NS, WIFI_PW);
+	return read_string(WIFI_NS, WIFI_PW, pass);
 }
 
-static int8_t
-get_wifi_bssid_set(void)
+static bool
+get_wifi_bssid_set(int8_t *bssid_set)
 {
-  return read_int8(WIFI_NS, WIFI_BSSID_SET);
+	return read_int8(WIFI_NS, WIFI_BSSID_SET, bssid_set);
 }
 
-static char*
-get_wifi_bssid(void)
+static bool
+get_wifi_bssid(char *bssid)
 {
-  return read_string(WIFI_NS, WIFI_BSSID);
+	return read_string(WIFI_NS, WIFI_BSSID, bssid);
 }
 
-static void
+static bool
 set_wifi_ssid(char *value)
 {
-  set_string(WIFI_NS, WIFI_SSID, value);
+	return set_string(WIFI_NS, WIFI_SSID, value);
 }
 
-static void
+static bool
 set_wifi_pass(char *value)
 {
-  set_string(WIFI_NS, WIFI_PW, value);
+	return set_string(WIFI_NS, WIFI_PW, value);
 }
 
-static void
+static bool 
 set_wifi_bssid_set(int8_t value)
 {
-  set_int8(WIFI_NS, WIFI_BSSID_SET, value);
+	return set_int8(WIFI_NS, WIFI_BSSID_SET, value);
 }
 
-static void
+static bool
 set_wifi_bssid(char *value)
 {
-  set_string(WIFI_NS, WIFI_BSSID, value);
+	return set_string(WIFI_NS, WIFI_BSSID, value);
 }
