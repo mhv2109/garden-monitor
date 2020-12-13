@@ -4,6 +4,8 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 
+#include "nvs.h"
+#include "wifi.h"
 #include "smartconfig.h"
 
 void app_main(void)
@@ -22,6 +24,6 @@ void app_main(void)
 
     printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
-   smartconfig__setup_wifi(); 
+	
+	smartconfig__init(); 
 }

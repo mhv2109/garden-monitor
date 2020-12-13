@@ -1,4 +1,4 @@
 idf_component_register(
-    SRCS "main.c"
+    SRCS "src/main.c"
     INCLUDE_DIRS ""
-)
+	REQUIRES nvs wifi smartconfig)

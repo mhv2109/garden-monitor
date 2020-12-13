@@ -5,7 +5,7 @@
 #include "../private/nvs_private.h"
 #include "../include/nvs.h"
 
-static const char *TAG = "nvs_system"; // logging tag
+static const char *TAG = "nvs_component"; // logging tag
 static uint8_t NVS_INITIALIZED = 0; // has the NVS flash system been initialized?
 
 char*
