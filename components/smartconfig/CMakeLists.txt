@@ -1,4 +1,4 @@
 idf_component_register(
-  SRCS "smartconfig.c"
-  INCLUDE_DIRS "."
-  REQUIRES esp_wifi nvs_flash wpa_supplicant) 
+  SRCS "src/smartconfig.c"
+  INCLUDE_DIRS "include"
+  REQUIRES esp_wifi wpa_supplicant nvs wifi) 
