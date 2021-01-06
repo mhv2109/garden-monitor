@@ -2,6 +2,7 @@ build/
 sdkconfig
 sdkconfig.old
 .DS_Store
+.cache/
 
 #
 # C
