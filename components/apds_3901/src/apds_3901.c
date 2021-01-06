@@ -1,8 +1,8 @@
-#include <math.h>
+#include "../include/apds_3901.h"
 #include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "../include/apds_3901.h"
+#include <math.h>
 
 // Register Addresses
 #define CONTROL_REG 0x80
@@ -17,9 +17,7 @@
 
 static const char *TAG = "APDS 3901";
 
-static esp_err_t
-set_register(apds_3901 *sensor, uint8_t reg, uint8_t val)
-{
+static esp_err_t set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -36,9 +34,7 @@ set_register(apds_3901 *sensor, uint8_t reg, uint8_t val)
   return err;
 }
 
-static esp_err_t
-get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val)
-{
+static esp_err_t get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -58,9 +54,8 @@ get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val)
   return err;
 }
 
-static esp_err_t
-get_two_registers(apds_3901 *sensor, uint8_t reg, uint16_t *dat)
-{
+static esp_err_t get_two_registers(apds_3901 *sensor, uint8_t reg,
+                                   uint16_t *dat) {
   i2c_cmd_handle_t cmd;
   uint8_t hi = 0, lo = 0;
   esp_err_t err;
@@ -86,27 +81,21 @@ get_two_registers(apds_3901 *sensor, uint8_t reg, uint16_t *dat)
   return err;
 }
 
-static esp_err_t
-apds_3901_poweron(apds_3901 *sensor)
-{
+static esp_err_t apds_3901_poweron(apds_3901 *sensor) {
   esp_err_t err;
   if ((err = set_register(sensor, CONTROL_REG, POW_ON)) != ESP_OK)
     ESP_LOGE(TAG, "Failed to power on sensor: %s", esp_err_to_name(err));
   return err;
 }
 
-static esp_err_t
-apds_3901_set_long_integ_time(apds_3901 *sensor)
-{
+static esp_err_t apds_3901_set_long_integ_time(apds_3901 *sensor) {
   esp_err_t err;
   if ((err = set_register(sensor, TIMING_REG, INT_TIME_402_MS)) != ESP_OK)
     ESP_LOGE(TAG, "Failed to configure ADC: %s", esp_err_to_name(err));
   return err;
 }
 
-static esp_err_t
-apds_3901_set_low_gain(apds_3901 *sensor)
-{
+static esp_err_t apds_3901_set_low_gain(apds_3901 *sensor) {
   uint8_t val;
   esp_err_t err;
 
@@ -122,9 +111,7 @@ apds_3901_set_low_gain(apds_3901 *sensor)
   return err;
 }
 
-static esp_err_t
-apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat)
-{
+static esp_err_t apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat) {
   esp_err_t err;
   if ((err = get_two_registers(sensor, DATA0LOW_REG, dat)) != ESP_OK) {
     ESP_LOGW(TAG, "Error reading from ch0: %s", esp_err_to_name(err));
@@ -133,9 +120,7 @@ apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat)
   return err;
 }
 
-static esp_err_t
-apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat)
-{
+static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
   esp_err_t err;
   if ((err = get_two_registers(sensor, DATA1LOW_REG, dat)) != ESP_OK) {
     ESP_LOGW(TAG, "Error reading from ch1: %s", esp_err_to_name(err));
@@ -144,9 +129,7 @@ apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat)
   return err;
 }
 
-esp_err_t
-apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor)
-{
+esp_err_t apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor) {
   esp_err_t err = ESP_OK;
 
   sensor->bus = bus;
@@ -161,13 +144,12 @@ apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor)
     return err;
 
   sensor->p_on = true;
-  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor->bus, sensor->addr);
+  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor->bus,
+           sensor->addr);
   return err;
 }
 
-esp_err_t
-apds_3901__read_lux(apds_3901 *sensor, float *lux)
-{
+esp_err_t apds_3901__read_lux(apds_3901 *sensor, float *lux) {
   esp_err_t err;
   uint16_t ch0, ch1;
   float ch0f, ch1f, ratio;
@@ -188,7 +170,7 @@ apds_3901__read_lux(apds_3901 *sensor, float *lux)
   // No error check required for long integration time
   // ESP_ERROR_CHECK((ch0 > 65535) || (ch1 > 65535));
 
-  ratio = ch1f/ch0f;
+  ratio = ch1f / ch0f;
 
   // Use default "Low" gain
   ch0f *= 16;

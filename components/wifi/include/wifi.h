@@ -5,6 +5,6 @@
 #include "esp_wifi.h"
 
 void wifi__init(void);
-esp_err_t wifi__connect_with_config(wifi_config_t*);
+esp_err_t wifi__connect_with_config(wifi_config_t *);
 
 #endif
