@@ -129,6 +129,14 @@ static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
   return err;
 }
 
+/**
+ * @brief Initialize APDS 3901 light sensor on a given I2C bus with given address.
+ * @note caller is responsible for allocating and freeing of `*sensor` param
+ * @param bus I2C bus on which to initialize sensor
+ * @param addr 7-bit I2C 'slave' address of sensor
+ * @param sensor return-arg pointer to `apds_3901` struct 
+ * @return error
+ */
 esp_err_t apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor) {
   esp_err_t err = ESP_OK;
 
@@ -149,6 +157,14 @@ esp_err_t apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor) {
   return err;
 }
 
+/**
+ * @brief Read light intensity in lux from APDS 3901. Must initialize
+ * `sensor` using `apds_3901__init` prior to calling this
+ * function.
+ * @param sensor pointer to already-initialized `apds_3901` struct
+ * @param float pointer for returning lux value
+ * @return error
+ */
 esp_err_t apds_3901__read_lux(apds_3901 *sensor, float *lux) {
   esp_err_t err;
   uint16_t ch0, ch1;

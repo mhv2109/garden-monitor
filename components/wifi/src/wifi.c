@@ -19,6 +19,11 @@ static SemaphoreHandle_t wifi_mutex;
 interacting with the WiFi/network stack */
 static bool WIFI_INIT = false;
 
+/**
+ * @brief Connect to WiFi using the provided config.
+ * @param config ESP-IDF WiFi config with ssid, password, and bssid set
+ * @return error
+ */
 esp_err_t wifi__connect_with_config(wifi_config_t *config) {
   if (!WIFI_INIT)
     wifi__init();
@@ -83,6 +88,10 @@ static esp_err_t connect_persisted_config(void) {
   return err;
 }
 
+/**
+ * @brief Initialize ESP32 WiFi system.
+ * @note Panics on failure.
+ */
 void wifi__init(void) {
   if (WIFI_INIT)
     return;

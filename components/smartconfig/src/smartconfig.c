@@ -114,6 +114,10 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
   }
 }
 
+/**
+ * @brief Initialize SmartConfig system for configuring and connecting to wifi.
+ * @note Panics on failure.
+ */
 void smartconfig__init(void) {
   if (SC_INIT)
     return;

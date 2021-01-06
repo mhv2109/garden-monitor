@@ -28,6 +28,11 @@ static bool set_wifi_pass(char *);
 static bool set_wifi_bssid_set(int8_t);
 static bool set_wifi_bssid(char *);
 
+/**
+ * @brief Persist WiFi config to NVS system.
+ * @param pointer to `wifi_config_t` variable to persist
+ * @return true if persistence was successful, false otherwise
+ */
 bool nvs__set_wifi_config(wifi_config_t *config) {
   char ssid[SSID_LEN + 1] = {0};
   memcpy(ssid, config->sta.ssid, sizeof(config->sta.ssid));
@@ -52,6 +57,12 @@ bool nvs__set_wifi_config(wifi_config_t *config) {
   return true;
 }
 
+/**
+ * @brief Fetch WiFi config from NVS system.
+ * @note caller is responsible for allocating/freeing `*config` param
+ * @param config pointer to `wifi_config_t` to return persisted WiFi config
+ * @return true if the read from storage was successful, false otherwise
+ */
 bool nvs__get_wifi_config(wifi_config_t *config) {
   bzero(config, sizeof(wifi_config_t));
 

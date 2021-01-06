@@ -10,6 +10,14 @@ static const char *TAG = "i2c_component";
 static bool bus_0_init = false;
 static bool bus_1_init = false;
 
+/**
+ * Initialize one of two available I2C busses using the provided pins for
+ * SDA and SCL. Function will not allow re-initializing either bus.
+ * @param bus one of two I2C buses on ESP32 chip
+ * @param sda_io_num GPIO pin for I2C SDA line
+ * @param scl_io_num GPIO pin for I2C SCL line
+ * @return error
+ */
 esp_err_t i2c__master_init(i2c_port_t bus, int sda_io_num, int scl_io_num) {
   esp_err_t err = ESP_OK;
   i2c_config_t i2c_conf = {.mode = I2C_MODE_MASTER,

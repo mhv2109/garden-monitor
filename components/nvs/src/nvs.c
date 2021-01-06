@@ -77,8 +77,9 @@ bool set_int8(const char *ns, const char *key, int8_t value) {
 }
 
 /**
- * Initialize NVS Flash system.  NVS_INITIALIZED ensures that this only runs
- * once.
+ * @brief Initialize NVS Flash system.
+ * @note NVS_INITIALIZED ensures that this only runs once.
+ * @note Panics on failure
  **/
 void nvs__flash_init(void) {
   if (NVS_INITIALIZED)
