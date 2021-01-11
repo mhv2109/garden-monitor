@@ -116,7 +116,7 @@ static esp_err_t get_wide_register(sht_20 *sensor, uint8_t reg, uint16_t *dat, u
 
 static esp_err_t set_resolution(sht_20 *sensor) {
   esp_err_t err;
-  uint8_t val = 0;
+  uint8_t val;
 
   if ((err = get_register(sensor, SHT_20_READ_USER_REG, &val)) != ESP_OK)
     return err;
@@ -133,7 +133,7 @@ static esp_err_t set_resolution(sht_20 *sensor) {
  */
 esp_err_t sht_20__read_t(sht_20 *sensor, float *temp) {
   esp_err_t err;
-  uint16_t dat = 0;
+  uint16_t dat;
 
   if (!(sensor->init))
     if ((err = sht_20__init(sensor->bus, sensor)) != ESP_OK)
@@ -158,7 +158,7 @@ esp_err_t sht_20__read_t(sht_20 *sensor, float *temp) {
  */
 esp_err_t sht_20__read_rh(sht_20 *sensor, float *humd) {
   esp_err_t err;
-  uint16_t dat = 0;
+  uint16_t dat;
 
   if (!(sensor->init))
     if ((err = sht_20__init(sensor->bus, sensor)) != ESP_OK)

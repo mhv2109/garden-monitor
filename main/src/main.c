@@ -27,7 +27,7 @@ static const char *TAG = "ESP32 Garden Monitor";
 void read_lux_task(void *sensor_param) {
   apds_3901 *sensor = (apds_3901 *)sensor_param;
   esp_err_t err;
-  float lux = 0.0;
+  float lux;
 
   for (;;) {
     if ((err = apds_3901__read_lux(sensor, &lux)) == ESP_OK)
@@ -44,7 +44,7 @@ void read_lux_task(void *sensor_param) {
 void read_t_rh_task(void *sensor_param) {
   sht_20 *sensor = (sht_20 *)sensor_param;
   esp_err_t err;
-  float temp = 0.0, humd = 0.0;
+  float temp, humd;
 
   for (;;) {
     if ((err = sht_20__read_t(sensor, &temp)) == ESP_OK)
