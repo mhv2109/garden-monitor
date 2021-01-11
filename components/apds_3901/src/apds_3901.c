@@ -4,16 +4,9 @@
 #include "esp_log.h"
 #include <math.h>
 
-// Register Addresses
-#define CONTROL_REG 0x80
-#define TIMING_REG 0x81
-#define DATA0LOW_REG 0x8c
-#define DATA1LOW_REG 0x8e
-
-// Config constants
-#define POW_ON 0x3
-#define INT_TIME_402_MS 0x02
 #define SET_LOW_GAIN(v) v &= ~0x10
+
+#define I2C_MAX_WAIT pdMS_TO_TICKS(13)
 
 static const char *TAG = "APDS 3901";
 
@@ -28,7 +21,7 @@ static esp_err_t set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
   i2c_master_write_byte(cmd, reg, I2C_MASTER_ACK);
   i2c_master_write_byte(cmd, val, I2C_MASTER_ACK);
   i2c_master_stop(cmd);
-  err = i2c_master_cmd_begin(sensor->bus, cmd, 1000 / portTICK_PERIOD_MS);
+  err = i2c_master_cmd_begin(sensor->bus, cmd, I2C_MAX_WAIT);
   i2c_cmd_link_delete(cmd);
 
   return err;
@@ -48,7 +41,7 @@ static esp_err_t get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val) {
                         I2C_MASTER_NACK);
   i2c_master_read_byte(cmd, val, I2C_MASTER_NACK);
   i2c_master_stop(cmd);
-  err = i2c_master_cmd_begin(sensor->bus, cmd, 1000 / portTICK_PERIOD_MS);
+  err = i2c_master_cmd_begin(sensor->bus, cmd, I2C_MAX_WAIT);
   i2c_cmd_link_delete(cmd);
 
   return err;
@@ -71,7 +64,7 @@ static esp_err_t get_two_registers(apds_3901 *sensor, uint8_t reg,
   i2c_master_read_byte(cmd, &lo, I2C_MASTER_ACK);
   i2c_master_read_byte(cmd, &hi, I2C_MASTER_NACK);
   i2c_master_stop(cmd);
-  err = i2c_master_cmd_begin(sensor->bus, cmd, 1000 / portTICK_PERIOD_MS);
+  err = i2c_master_cmd_begin(sensor->bus, cmd, I2C_MAX_WAIT);
   i2c_cmd_link_delete(cmd);
 
   if (err == ESP_OK) {
@@ -83,14 +76,16 @@ static esp_err_t get_two_registers(apds_3901 *sensor, uint8_t reg,
 
 static esp_err_t apds_3901_poweron(apds_3901 *sensor) {
   esp_err_t err;
-  if ((err = set_register(sensor, CONTROL_REG, POW_ON)) != ESP_OK)
+  if ((err = set_register(sensor, APDS_3901_CONTROL_REG, APDS_3901_POW_ON)) !=
+      ESP_OK)
     ESP_LOGE(TAG, "Failed to power on sensor: %s", esp_err_to_name(err));
   return err;
 }
 
 static esp_err_t apds_3901_set_long_integ_time(apds_3901 *sensor) {
   esp_err_t err;
-  if ((err = set_register(sensor, TIMING_REG, INT_TIME_402_MS)) != ESP_OK)
+  if ((err = set_register(sensor, APDS_3901_TIMING_REG,
+                          APDS_3901_INT_TIME_402_MS)) != ESP_OK)
     ESP_LOGE(TAG, "Failed to configure ADC: %s", esp_err_to_name(err));
   return err;
 }
@@ -99,13 +94,13 @@ static esp_err_t apds_3901_set_low_gain(apds_3901 *sensor) {
   uint8_t val;
   esp_err_t err;
 
-  if ((err = get_register(sensor, TIMING_REG, &val)) != ESP_OK) {
+  if ((err = get_register(sensor, APDS_3901_TIMING_REG, &val)) != ESP_OK) {
     ESP_LOGE(TAG, "Failed to read ADC config: %s", esp_err_to_name(err));
     return err;
   }
 
   SET_LOW_GAIN(val);
-  if ((err = set_register(sensor, TIMING_REG, val)) != ESP_OK)
+  if ((err = set_register(sensor, APDS_3901_TIMING_REG, val)) != ESP_OK)
     ESP_LOGE(TAG, "Failed to set gain on ADC: %s", esp_err_to_name(err));
 
   return err;
@@ -113,7 +108,8 @@ static esp_err_t apds_3901_set_low_gain(apds_3901 *sensor) {
 
 static esp_err_t apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat) {
   esp_err_t err;
-  if ((err = get_two_registers(sensor, DATA0LOW_REG, dat)) != ESP_OK) {
+  if ((err = get_two_registers(sensor, APDS_3901_DATA0LOW_REG, dat)) !=
+      ESP_OK) {
     ESP_LOGW(TAG, "Error reading from ch0: %s", esp_err_to_name(err));
     sensor->p_on = false;
   }
@@ -122,7 +118,8 @@ static esp_err_t apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat) {
 
 static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
   esp_err_t err;
-  if ((err = get_two_registers(sensor, DATA1LOW_REG, dat)) != ESP_OK) {
+  if ((err = get_two_registers(sensor, APDS_3901_DATA1LOW_REG, dat)) !=
+      ESP_OK) {
     ESP_LOGW(TAG, "Error reading from ch1: %s", esp_err_to_name(err));
     sensor->p_on = false;
   }
@@ -138,7 +135,7 @@ static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
  * @return error
  */
 esp_err_t apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor) {
-  esp_err_t err = ESP_OK;
+  esp_err_t err;
 
   sensor->bus = bus;
   sensor->addr = addr;
