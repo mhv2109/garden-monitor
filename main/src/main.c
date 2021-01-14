@@ -10,6 +10,7 @@
 #include "hal/i2c_types.h"
 #include <stdio.h>
 
+#include "seesaw_soil.h"
 #include "apds_3901.h"
 #include "sht_20.h"
 #include "i2c.h"
@@ -20,7 +21,9 @@
 #define I2C_0_SDA_PIN GPIO_NUM_15
 #define I2C_0_SCL_PIN GPIO_NUM_2
 
+/// Configurable I2C addresses
 #define APDS_3901_I2C_ADDR 0x39
+#define SEESAW_I2C_ADDR 0x36
 
 static const char *TAG = "ESP32 Garden Monitor";
 
@@ -63,11 +66,29 @@ void read_t_rh_task(void *sensor_param) {
   vTaskDelete(NULL);
 }
 
+void read_s_m_task(void *sensor_param) {
+  seesaw_soil *sensor = (seesaw_soil *)sensor_param;
+  esp_err_t err;
+  uint16_t moist;
+
+  for (;;) {
+    if ((err = seesaw__read_m(sensor, &moist)) == ESP_OK)
+      ESP_LOGI(TAG, "Soil moisture reading: %u", moist);
+    else
+      ESP_LOGW(TAG, "Error reading soil moisture: %s", esp_err_to_name(err));
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+
+  vTaskDelete(NULL);
+}
+
 void app_main(void) {
   esp_err_t err;
   esp_chip_info_t chip_info;
   apds_3901 *lux_sensor = (apds_3901 *)malloc(sizeof(apds_3901));
   sht_20 *t_rh_sensor = (sht_20 *)malloc(sizeof(sht_20));
+  seesaw_soil *s_m_sensor = (seesaw_soil *)malloc(sizeof(seesaw_soil));
 
   printf("Hello world!\n");
 
@@ -101,7 +122,12 @@ void app_main(void) {
     // don't return here, sensor can be re-initialized on read
   }
 
+  if ((err = seesaw__init(I2C_NUM_0, SEESAW_I2C_ADDR, s_m_sensor)) != ESP_OK) {
+    ESP_LOGE(TAG, "Error initializing soil sensor: %s", esp_err_to_name(err));
+  }
+
   // read sensors continuously
   xTaskCreate(&read_lux_task, "read_lux_task", 2048, lux_sensor, 6, NULL);
   xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, t_rh_sensor, 6, NULL);
+  xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, s_m_sensor, 6, NULL);
 }
