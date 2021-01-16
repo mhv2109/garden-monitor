@@ -86,9 +86,9 @@ void read_s_m_task(void *sensor_param) {
 void app_main(void) {
   esp_err_t err;
   esp_chip_info_t chip_info;
-  apds_3901 *lux_sensor = (apds_3901 *)malloc(sizeof(apds_3901));
-  sht_20 *t_rh_sensor = (sht_20 *)malloc(sizeof(sht_20));
-  seesaw_soil *s_m_sensor = (seesaw_soil *)malloc(sizeof(seesaw_soil));
+  apds_3901 *lux_sensor = apds_3901__new();
+  sht_20 *t_rh_sensor = sht_20__new();
+  seesaw_soil *s_m_sensor = seesaw__new();
 
   printf("Hello world!\n");
 

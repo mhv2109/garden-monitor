@@ -10,9 +10,14 @@
 
 static const char *TAG = "Adafruit Seesaw soil sensor";
 
-static esp_err_t get_wide_register(seesaw_soil *sensor, uint8_t reg_h,
-                                   uint8_t reg_l, uint16_t *dat,
-                                   uint32_t delay) {
+struct seesaw_soil {
+  i2c_port_t bus;
+  uint8_t addr;
+};
+
+static esp_err_t
+get_wide_register(seesaw_soil *sensor, uint8_t reg_h, uint8_t reg_l,
+                  uint16_t *dat, uint32_t delay) {
   i2c_cmd_handle_t cmd;
   uint8_t hi = 0xff, lo = 0xff;
   esp_err_t err = ESP_OK;
@@ -107,4 +112,13 @@ esp_err_t seesaw__init(i2c_port_t bus, uint8_t addr, seesaw_soil *sensor) {
   sensor->bus = bus;
   sensor->addr = addr;
   return ESP_OK;
+}
+
+/**
+ * @brief Allocate a `seesaw_soil` struct representing a Adafruit STEMMA soil sensor on the heap.
+ * @note Caller is responsible for freeing result
+ * @return pointer to `seesaw_soil` struct
+ */
+seesaw_soil* seesaw__new(void) {
+  return (seesaw_soil*)malloc(sizeof(seesaw_soil));
 }

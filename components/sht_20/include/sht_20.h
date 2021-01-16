@@ -16,11 +16,9 @@
 /// Configuration constants
 #define SHT_20_USER_REGISTER_RESOLUTION_RH12_TEMP14 0x3f
 
-typedef struct sht_20 {
-  i2c_port_t bus;
-  bool init;
-} sht_20;
+typedef struct sht_20 sht_20;
 
+sht_20* sht_20__new(void);
 esp_err_t sht_20__init(i2c_port_t bus, sht_20 *sensor);
 esp_err_t sht_20__read_rh(sht_20 *sensor, float *humd);
 esp_err_t sht_20__read_t(sht_20 *sensor, float *temp);

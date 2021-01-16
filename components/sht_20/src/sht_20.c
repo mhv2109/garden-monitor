@@ -11,7 +11,13 @@
 
 static const char *TAG = "SHT 20";
 
-static esp_err_t get_register(sht_20 *sensor, uint8_t reg, uint8_t *val) {
+struct sht_20 {
+  i2c_port_t bus;
+  bool init;
+};
+
+static esp_err_t
+get_register(sht_20 *sensor, uint8_t reg, uint8_t *val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -195,4 +201,13 @@ esp_err_t sht_20__init(i2c_port_t bus, sht_20 *sensor) {
   ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor->bus,
            SHT_20_I2C_ADDR);
   return err;
+}
+
+/**
+ * @brief Allocate a struct representing a SHT 20 sensor on the heap.
+ * @note caller is responsible for freeing result
+ * @return pointer to `sht_20` struct
+ */
+sht_20* sht_20__new(void) {
+  return (sht_20*)malloc(sizeof(sht_20));
 }

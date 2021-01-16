@@ -9,11 +9,10 @@
 #define SEESAW_TOUCH_CHANNEL_OFFSET 0x10
 #define SEESAW_TOUCH_PIN 0x00
 
-typedef struct seesaw_soil {
-  i2c_port_t bus;
-  uint8_t addr;
-} seesaw_soil;
+struct seesaw_soil;
+typedef struct seesaw_soil seesaw_soil;
 
+seesaw_soil* seesaw__new(void);
 esp_err_t seesaw__init(i2c_port_t bus, uint8_t addr, seesaw_soil *sensor);
 esp_err_t seesaw__read_m(seesaw_soil *sensor, uint16_t *moist);
 

@@ -10,7 +10,14 @@
 
 static const char *TAG = "APDS 3901";
 
-static esp_err_t set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
+struct apds_3901 {
+  i2c_port_t bus;
+  uint8_t addr;
+  bool p_on;
+};
+
+static esp_err_t
+set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -201,4 +208,13 @@ esp_err_t apds_3901__read_lux(apds_3901 *sensor, float *lux) {
     *lux = 0.0;
 
   return err;
+}
+
+/**
+ * @brief Allocate a struct representing a APDS 3901 lux sensor on the heap.
+ * @note Caller is responsible for freeing result
+ * @return pointer to `apds_3901` struct
+ */
+apds_3901* apds_3901__new(void) {
+  return (apds_3901*)malloc(sizeof(apds_3901));
 }
