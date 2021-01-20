@@ -2,22 +2,28 @@
 #include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include <string.h>
 
+/// Configuration constants
 #define RH_READ_WAIT_MS 30 // datasheet specifies max 29ms to get a reading
 #define T_READ_WAIT_MS 86  // datasheet specifies max 85ms to get a reading
-
 #define I2C_MAX_WAIT pdMS_TO_TICKS(13) // i2c timeout is 13ms
 #define MAX_RETRIES 10
-
 static const char *TAG = "SHT 20";
 
-struct sht_20 {
+/// Representation of sensor
+typedef struct sht_20 {
   i2c_port_t bus;
   bool init;
-};
+} sht_20;
 
-static esp_err_t
-get_register(sht_20 *sensor, uint8_t reg, uint8_t *val) {
+/// Forward declarations
+static esp_err_t init_sensor(sht_20 *sensor, i2c_port_t bus);
+
+/// Global vars
+static sht_20 *sensor_ = NULL;
+
+static esp_err_t get_register(sht_20 *sensor, uint8_t reg, uint8_t *val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -67,7 +73,8 @@ static uint8_t check_crc(uint16_t dat, uint8_t checksum) {
   return (uint8_t)remainder;
 }
 
-static esp_err_t get_wide_register(sht_20 *sensor, uint8_t reg, uint16_t *dat, uint32_t delay) {
+static esp_err_t get_wide_register(sht_20 *sensor, uint8_t reg, uint16_t *dat,
+                                   uint32_t delay) {
   i2c_cmd_handle_t cmd;
   uint8_t hi, lo, checksum, att = 0;
   esp_err_t err;
@@ -133,20 +140,21 @@ static esp_err_t set_resolution(sht_20 *sensor) {
 
 /**
  * @brief Calculate temperature in degrees Celsius.
- * @note Must initialize `*sensor` with `sht_20__init` first!
- * @param sensor pointer to initialized `sht_20` struct
+ * @note Must initialize sensor with `init_sht_20` first!
  * @param return-arg pointer to temperature in degrees Celsius
+ * @return error
  */
-esp_err_t sht_20__read_t(sht_20 *sensor, float *temp) {
+esp_err_t read_temp(float *temp) {
   esp_err_t err;
   uint16_t dat;
 
-  if (!(sensor->init))
-    if ((err = sht_20__init(sensor->bus, sensor)) != ESP_OK)
+  if (!(sensor_->init))
+    if ((err = init_sensor(sensor_, sensor_->bus)) != ESP_OK)
       return err;
 
-  if ((err = get_wide_register(sensor, SHT_20_TEMP_MEASURE_NOHOLD, &dat, T_READ_WAIT_MS)) != ESP_OK) {
-    sensor->init = false;
+  if ((err = get_wide_register(sensor_, SHT_20_TEMP_MEASURE_NOHOLD, &dat,
+                               T_READ_WAIT_MS)) != ESP_OK) {
+    sensor_->init = false;
     return err;
   }
 
@@ -158,20 +166,21 @@ esp_err_t sht_20__read_t(sht_20 *sensor, float *temp) {
 
 /**
  * @brief Calculate relative humidity.
- * @note Must initialize `*sensor` with `sht_20__init` first!
- * @param sensor pointer to initialized `sht_20` struct
+ * @note Must initialize sensor with `init_sht_20` first!
  * @param return-arg pointer to humidity value in percentage
+ * @return error
  */
-esp_err_t sht_20__read_rh(sht_20 *sensor, float *humd) {
+esp_err_t read_rel_humd(float *humd) {
   esp_err_t err;
   uint16_t dat;
 
-  if (!(sensor->init))
-    if ((err = sht_20__init(sensor->bus, sensor)) != ESP_OK)
+  if (!(sensor_->init))
+    if ((err = init_sensor(sensor_, sensor_->bus)) != ESP_OK)
       return err;
 
-  if ((err = get_wide_register(sensor, SHT_20_HUMD_MEASURE_NOHOLD, &dat, RH_READ_WAIT_MS)) != ESP_OK) {
-    sensor->init = false;
+  if ((err = get_wide_register(sensor_, SHT_20_HUMD_MEASURE_NOHOLD, &dat,
+                               RH_READ_WAIT_MS)) != ESP_OK) {
+    sensor_->init = false;
     return err;
   }
 
@@ -181,14 +190,7 @@ esp_err_t sht_20__read_rh(sht_20 *sensor, float *humd) {
   return err;
 }
 
-/**
- * @brief Initialize SHT 20 temperature and humidity sensor on a given I2C bus.
- * @note caller is responsible for allocating and freeing of `*sensor` param
- * @param bus I2C bus on which to initialize sensor
- * @param sensor return-arg pointer to `sht_20` struct
- * @return error
- */
-esp_err_t sht_20__init(i2c_port_t bus, sht_20 *sensor) {
+static esp_err_t init_sensor(sht_20 *sensor, i2c_port_t bus) {
   esp_err_t err;
 
   sensor->bus = bus;
@@ -198,16 +200,37 @@ esp_err_t sht_20__init(i2c_port_t bus, sht_20 *sensor) {
     return err;
 
   sensor->init = true;
-  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor->bus,
-           SHT_20_I2C_ADDR);
   return err;
 }
 
 /**
- * @brief Allocate a struct representing a SHT 20 sensor on the heap.
- * @note caller is responsible for freeing result
- * @return pointer to `sht_20` struct
+ * @brief Initialize SHT 20 temperature and humidity sensor on a given I2C bus.
+ * @param bus I2C bus on which to initialize sensor
+ * @return error
  */
-sht_20* sht_20__new(void) {
-  return (sht_20*)malloc(sizeof(sht_20));
+esp_err_t init_sht_20(i2c_port_t bus) {
+  esp_err_t err;
+  sht_20 sensor;
+
+  if (sensor_ != NULL) {
+    if (sensor_->bus != bus) {
+      ESP_LOGW(TAG, "Sensor already initialized with different params");
+      err = ESP_FAIL;
+    } else {
+      ESP_LOGI(TAG, "Sensor already initialized");
+      err = ESP_OK;
+    }
+    return err;
+  }
+
+  if ((err = init_sensor(&sensor, bus)) != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to initialize sensor: %s", esp_err_to_name(err));
+    return err;
+  }
+
+  sensor_ = (sht_20 *)malloc(sizeof(sht_20));
+  memcpy(sensor_, &sensor, sizeof(sht_20));
+  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor_->bus,
+           SHT_20_I2C_ADDR);
+  return err;
 }
