@@ -87,9 +87,9 @@ static void sc_event_handler(void *arg, esp_event_base_t event_base,
       ESP_LOGD(TAG, "PASSWORD:%s", password);
 
       // persist wifi settings
-      nvs__set_wifi_config(&wifi_config);
+      set_persisted_wifi_config(&wifi_config);
 
-      ESP_ERROR_CHECK(wifi__connect_with_config(&wifi_config));
+      ESP_ERROR_CHECK(wifi_connect(&wifi_config));
 
       break;
     case SC_EVENT_SEND_ACK_DONE:
@@ -118,7 +118,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
  * @brief Initialize SmartConfig system for configuring and connecting to wifi.
  * @note Panics on failure.
  */
-void smartconfig__init(void) {
+void init_smartconfig(void) {
   if (SC_INIT)
     return;
 
@@ -131,7 +131,7 @@ void smartconfig__init(void) {
   ESP_ERROR_CHECK(esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID,
                                              &sc_event_handler, NULL));
 
-  wifi__init();
+  init_wifi();
 
   SC_INIT = true;
 }

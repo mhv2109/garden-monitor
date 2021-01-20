@@ -18,7 +18,7 @@ static bool bus_1_init = false;
  * @param scl_io_num GPIO pin for I2C SCL line
  * @return error
  */
-esp_err_t i2c__master_init(i2c_port_t bus, int sda_io_num, int scl_io_num) {
+esp_err_t init_i2c_master(i2c_port_t bus, int sda_io_num, int scl_io_num) {
   esp_err_t err = ESP_OK;
   i2c_config_t i2c_conf = {.mode = I2C_MODE_MASTER,
                            .sda_io_num = sda_io_num,

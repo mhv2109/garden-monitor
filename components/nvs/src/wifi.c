@@ -3,7 +3,7 @@
 #include "esp_wifi.h"
 
 #include "../include/nvs.h"
-#include "../private/nvs_private.h"
+#include "../private/nvs.h"
 
 // Namespace constants
 static const char *WIFI_NS = "wifi";
@@ -33,7 +33,7 @@ static bool set_wifi_bssid(char *);
  * @param pointer to `wifi_config_t` variable to persist
  * @return true if persistence was successful, false otherwise
  */
-bool nvs__set_wifi_config(wifi_config_t *config) {
+bool set_persisted_wifi_config(wifi_config_t *config) {
   char ssid[SSID_LEN + 1] = {0};
   memcpy(ssid, config->sta.ssid, sizeof(config->sta.ssid));
   if (!set_wifi_ssid(ssid))
@@ -63,7 +63,7 @@ bool nvs__set_wifi_config(wifi_config_t *config) {
  * @param config pointer to `wifi_config_t` to return persisted WiFi config
  * @return true if the read from storage was successful, false otherwise
  */
-bool nvs__get_wifi_config(wifi_config_t *config) {
+bool get_persisted_wifi_config(wifi_config_t *config) {
   bzero(config, sizeof(wifi_config_t));
 
   char ssid[SSID_LEN + 1];

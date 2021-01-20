@@ -24,9 +24,9 @@ static bool WIFI_INIT = false;
  * @param config ESP-IDF WiFi config with ssid, password, and bssid set
  * @return error
  */
-esp_err_t wifi__connect_with_config(wifi_config_t *config) {
+esp_err_t wifi_connect(wifi_config_t *config) {
   if (!WIFI_INIT)
-    wifi__init();
+    init_wifi();
 
   esp_err_t err;
 
@@ -77,9 +77,9 @@ static esp_err_t connect_persisted_config(void) {
   wifi_config_t config;
   esp_err_t err;
 
-  nvs__get_wifi_config(&config);
+  get_persisted_wifi_config(&config);
 
-  if ((err = wifi__connect_with_config(&config)) == ESP_OK) {
+  if ((err = wifi_connect(&config)) == ESP_OK) {
     ESP_LOGI(TAG, "WiFi connected using persisted credentials");
   } else {
     ESP_LOGW(TAG,
@@ -92,11 +92,11 @@ static esp_err_t connect_persisted_config(void) {
  * @brief Initialize ESP32 WiFi system.
  * @note Panics on failure.
  */
-void wifi__init(void) {
+void init_wifi(void) {
   if (WIFI_INIT)
     return;
 
-  nvs__flash_init();
+  init_nvs();
 
   wifi_mutex = xSemaphoreCreateMutex();
 

@@ -1,6 +1,6 @@
 #ifndef SMARTCONFIG_H
 #define SMARTCONFIG_H
 
-void smartconfig__init(void);
+void init_smartconfig(void);
 
 #endif

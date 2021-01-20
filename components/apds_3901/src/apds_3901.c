@@ -3,21 +3,24 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include <math.h>
+#include <string.h>
 
+/// Configuration constants
 #define SET_LOW_GAIN(v) v &= ~0x10
-
 #define I2C_MAX_WAIT pdMS_TO_TICKS(13)
-
 static const char *TAG = "APDS 3901";
 
-struct apds_3901 {
+/// Representation of sensor
+typedef struct apds_3901 {
   i2c_port_t bus;
   uint8_t addr;
   bool p_on;
-};
+} apds_3901_t;
 
-static esp_err_t
-set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
+/// Global vars
+static apds_3901_t *SENSOR = NULL;
+
+static esp_err_t set_register(apds_3901_t *sensor, uint8_t reg, uint8_t val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -34,7 +37,7 @@ set_register(apds_3901 *sensor, uint8_t reg, uint8_t val) {
   return err;
 }
 
-static esp_err_t get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val) {
+static esp_err_t get_register(apds_3901_t *sensor, uint8_t reg, uint8_t *val) {
   i2c_cmd_handle_t cmd;
   esp_err_t err;
 
@@ -54,7 +57,7 @@ static esp_err_t get_register(apds_3901 *sensor, uint8_t reg, uint8_t *val) {
   return err;
 }
 
-static esp_err_t get_two_registers(apds_3901 *sensor, uint8_t reg,
+static esp_err_t get_two_registers(apds_3901_t *sensor, uint8_t reg,
                                    uint16_t *dat) {
   i2c_cmd_handle_t cmd;
   uint8_t hi = 0, lo = 0;
@@ -81,7 +84,7 @@ static esp_err_t get_two_registers(apds_3901 *sensor, uint8_t reg,
   return err;
 }
 
-static esp_err_t apds_3901_poweron(apds_3901 *sensor) {
+static esp_err_t poweron(apds_3901_t *sensor) {
   esp_err_t err;
   if ((err = set_register(sensor, APDS_3901_CONTROL_REG, APDS_3901_POW_ON)) !=
       ESP_OK)
@@ -89,7 +92,7 @@ static esp_err_t apds_3901_poweron(apds_3901 *sensor) {
   return err;
 }
 
-static esp_err_t apds_3901_set_long_integ_time(apds_3901 *sensor) {
+static esp_err_t set_long_integ_time(apds_3901_t *sensor) {
   esp_err_t err;
   if ((err = set_register(sensor, APDS_3901_TIMING_REG,
                           APDS_3901_INT_TIME_402_MS)) != ESP_OK)
@@ -97,7 +100,7 @@ static esp_err_t apds_3901_set_long_integ_time(apds_3901 *sensor) {
   return err;
 }
 
-static esp_err_t apds_3901_set_low_gain(apds_3901 *sensor) {
+static esp_err_t set_low_gain(apds_3901_t *sensor) {
   uint8_t val;
   esp_err_t err;
 
@@ -113,7 +116,7 @@ static esp_err_t apds_3901_set_low_gain(apds_3901 *sensor) {
   return err;
 }
 
-static esp_err_t apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat) {
+static esp_err_t get_ch0(apds_3901_t *sensor, uint16_t *dat) {
   esp_err_t err;
   if ((err = get_two_registers(sensor, APDS_3901_DATA0LOW_REG, dat)) !=
       ESP_OK) {
@@ -123,7 +126,7 @@ static esp_err_t apds_3901_get_ch0(apds_3901 *sensor, uint16_t *dat) {
   return err;
 }
 
-static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
+static esp_err_t get_ch1(apds_3901_t *sensor, uint16_t *dat) {
   esp_err_t err;
   if ((err = get_two_registers(sensor, APDS_3901_DATA1LOW_REG, dat)) !=
       ESP_OK) {
@@ -133,55 +136,83 @@ static esp_err_t apds_3901_get_ch1(apds_3901 *sensor, uint16_t *dat) {
   return err;
 }
 
-/**
- * @brief Initialize APDS 3901 light sensor on a given I2C bus with given address.
- * @note caller is responsible for allocating and freeing of `*sensor` param
- * @param bus I2C bus on which to initialize sensor
- * @param addr 7-bit I2C 'slave' address of sensor
- * @param sensor return-arg pointer to `apds_3901` struct 
- * @return error
- */
-esp_err_t apds_3901__init(i2c_port_t bus, uint8_t addr, apds_3901 *sensor) {
+static esp_err_t init_sensor(apds_3901_t *sensor, i2c_port_t bus, uint8_t addr) {
   esp_err_t err;
 
   sensor->bus = bus;
   sensor->addr = addr;
   sensor->p_on = false;
 
-  if ((err = apds_3901_poweron(sensor)) != ESP_OK)
+  if ((err = poweron(sensor)) != ESP_OK)
     return err;
-  if ((err = apds_3901_set_low_gain(sensor)) != ESP_OK)
+  if ((err = set_low_gain(sensor)) != ESP_OK)
     return err;
-  if ((err = apds_3901_set_long_integ_time(sensor)) != ESP_OK)
+  if ((err = set_long_integ_time(sensor)) != ESP_OK)
     return err;
 
   sensor->p_on = true;
-  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", sensor->bus,
-           sensor->addr);
+  return err;
+}
+
+/**
+ * @brief Initialize APDS 3901 light sensor on a given I2C bus with given
+ * address.
+ * @param bus I2C bus on which to initialize sensor
+ * @param addr 7-bit I2C 'slave' address of sensor
+ * @return error
+ */
+esp_err_t init_apds_3901(i2c_port_t bus, uint8_t addr) {
+  esp_err_t err;
+  apds_3901_t sensor;
+
+  if (SENSOR != NULL) {
+    if (SENSOR->bus != bus || SENSOR->addr != addr) {
+      ESP_LOGW(TAG, "Sensor already initialized with different params");
+      err = ESP_FAIL;
+    } else {
+      ESP_LOGI(TAG, "Sensor already initialized");
+      err = ESP_OK;
+    }
+    return err;
+  }
+
+  if ((err = init_sensor(&sensor, bus, addr)) != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to initialize sensor: %s", esp_err_to_name(err));
+    return err;
+  }
+
+  SENSOR = (apds_3901_t *)malloc(sizeof(apds_3901_t));
+  memcpy(SENSOR, &sensor, sizeof(apds_3901_t));
+  ESP_LOGI(TAG, "Sensor initialized on bus %d with address %02x", SENSOR->bus,
+           SENSOR->addr);
   return err;
 }
 
 /**
  * @brief Read light intensity in lux from APDS 3901. Must initialize
- * `sensor` using `apds_3901__init` prior to calling this
+ * sensor using `init_apds_3901` prior to calling this
  * function.
- * @param sensor pointer to already-initialized `apds_3901` struct
  * @param float pointer for returning lux value
  * @return error
  */
-esp_err_t apds_3901__read_lux(apds_3901 *sensor, float *lux) {
+esp_err_t read_lux(float *lux) {
   esp_err_t err;
   uint16_t ch0, ch1;
   float ch0f, ch1f, ratio;
 
+  if (SENSOR == NULL) {
+    ESP_LOGE(TAG, "Sensor not initialized");
+    return ESP_FAIL;
+  }
+
   // handle power failure on sensor (have to turn it back on)
-  if (sensor->p_on == false)
-    if ((err = apds_3901__init(sensor->bus, sensor->addr, sensor)) != ESP_OK)
+  if (SENSOR->p_on == false)
+    if ((err = init_sensor(SENSOR, SENSOR->bus, SENSOR->addr)) != ESP_OK)
       return err;
 
-  if ((err = apds_3901_get_ch0(sensor, &ch0)) != ESP_OK)
+  if ((err = get_ch0(SENSOR, &ch0)) != ESP_OK)
     return err;
-  if ((err = apds_3901_get_ch1(sensor, &ch1)) != ESP_OK)
+  if ((err = get_ch1(SENSOR, &ch1)) != ESP_OK)
     return err;
 
   ch1f = (float)ch1;
@@ -208,13 +239,4 @@ esp_err_t apds_3901__read_lux(apds_3901 *sensor, float *lux) {
     *lux = 0.0;
 
   return err;
-}
-
-/**
- * @brief Allocate a struct representing a APDS 3901 lux sensor on the heap.
- * @note Caller is responsible for freeing result
- * @return pointer to `apds_3901` struct
- */
-apds_3901* apds_3901__new(void) {
-  return (apds_3901*)malloc(sizeof(apds_3901));
 }

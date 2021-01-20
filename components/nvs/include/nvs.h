@@ -3,9 +3,9 @@
 
 #include "esp_wifi.h"
 
-void nvs__flash_init(void);
+void init_nvs(void);
 
-bool nvs__get_wifi_config(wifi_config_t *);
-bool nvs__set_wifi_config(wifi_config_t *);
+bool get_persisted_wifi_config(wifi_config_t *);
+bool set_persisted_wifi_config(wifi_config_t *);
 
 #endif

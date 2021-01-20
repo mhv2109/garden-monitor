@@ -3,7 +3,7 @@
 #include "nvs_flash.h"
 
 #include "../include/nvs.h"
-#include "../private/nvs_private.h"
+#include "../private/nvs.h"
 
 #define READ_ERROR_CHECK(err)                                                  \
   switch (err) {                                                               \
@@ -31,7 +31,7 @@ bool read_string(const char *ns, const char *key, char *result) {
   size_t len;
 
   if (!NVS_INITIALIZED)
-    nvs__flash_init();
+    init_nvs();
 
   READ_ERROR_CHECK(nvs_open(ns, NVS_READONLY, &handle));
   READ_ERROR_CHECK(nvs_get_str(handle, key, NULL, &len));
@@ -44,7 +44,7 @@ bool set_string(const char *ns, const char *key, char *value) {
   nvs_handle_t handle;
 
   if (!NVS_INITIALIZED)
-    nvs__flash_init();
+    init_nvs();
 
   WRITE_ERROR_CHECK(nvs_open(ns, NVS_READWRITE, &handle));
   WRITE_ERROR_CHECK(nvs_set_str(handle, key, value));
@@ -56,7 +56,7 @@ bool read_int8(const char *ns, const char *key, int8_t *result) {
   nvs_handle_t handle;
 
   if (!NVS_INITIALIZED)
-    nvs__flash_init();
+    init_nvs();
 
   READ_ERROR_CHECK(nvs_open(ns, NVS_READONLY, &handle));
   READ_ERROR_CHECK(nvs_get_i8(handle, key, result));
@@ -68,7 +68,7 @@ bool set_int8(const char *ns, const char *key, int8_t value) {
   nvs_handle_t handle;
 
   if (!NVS_INITIALIZED)
-    nvs__flash_init();
+    init_nvs();
 
   WRITE_ERROR_CHECK(nvs_open(ns, NVS_READWRITE, &handle));
   WRITE_ERROR_CHECK(nvs_set_i8(handle, key, value));
@@ -81,7 +81,7 @@ bool set_int8(const char *ns, const char *key, int8_t value) {
  * @note NVS_INITIALIZED ensures that this only runs once.
  * @note Panics on failure
  **/
-void nvs__flash_init(void) {
+void init_nvs(void) {
   if (NVS_INITIALIZED)
     return;
 

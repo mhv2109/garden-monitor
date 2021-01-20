@@ -10,11 +10,11 @@
 #include "hal/i2c_types.h"
 #include <stdio.h>
 
-#include "seesaw_soil.h"
 #include "apds_3901.h"
-#include "sht_20.h"
 #include "i2c.h"
 #include "nvs.h"
+#include "seesaw_soil.h"
+#include "sht_20.h"
 #include "smartconfig.h"
 #include "wifi.h"
 
@@ -28,12 +28,11 @@
 static const char *TAG = "ESP32 Garden Monitor";
 
 void read_lux_task(void *sensor_param) {
-  apds_3901 *sensor = (apds_3901 *)sensor_param;
   esp_err_t err;
   float lux;
 
   for (;;) {
-    if ((err = apds_3901__read_lux(sensor, &lux)) == ESP_OK)
+    if ((err = read_lux(&lux)) == ESP_OK)
       ESP_LOGI(TAG, "Lux reading: %f", lux);
     else
       ESP_LOGW(TAG, "Error reading lux: %s", esp_err_to_name(err));
@@ -45,20 +44,20 @@ void read_lux_task(void *sensor_param) {
 }
 
 void read_t_rh_task(void *sensor_param) {
-  sht_20 *sensor = (sht_20 *)sensor_param;
   esp_err_t err;
   float temp, humd;
 
   for (;;) {
-    if ((err = sht_20__read_t(sensor, &temp)) == ESP_OK)
+    if ((err = read_temp(&temp)) == ESP_OK)
       ESP_LOGI(TAG, "Temperature reading (C): %f", temp);
     else
       ESP_LOGW(TAG, "Error reading temperature: %s", esp_err_to_name(err));
 
-    if ((err = sht_20__read_rh(sensor, &humd)) == ESP_OK)
+    if ((err = read_rel_humd(&humd)) == ESP_OK)
       ESP_LOGI(TAG, "Relative humidity reading: %f", humd);
     else
-      ESP_LOGW(TAG, "Error reading relative humidity: %s", esp_err_to_name(err));
+      ESP_LOGW(TAG, "Error reading relative humidity: %s",
+               esp_err_to_name(err));
 
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
@@ -67,12 +66,11 @@ void read_t_rh_task(void *sensor_param) {
 }
 
 void read_s_m_task(void *sensor_param) {
-  seesaw_soil *sensor = (seesaw_soil *)sensor_param;
   esp_err_t err;
   uint16_t moist;
 
   for (;;) {
-    if ((err = seesaw__read_m(sensor, &moist)) == ESP_OK)
+    if ((err = read_soil_moisture(&moist)) == ESP_OK)
       ESP_LOGI(TAG, "Soil moisture reading: %u", moist);
     else
       ESP_LOGW(TAG, "Error reading soil moisture: %s", esp_err_to_name(err));
@@ -86,9 +84,6 @@ void read_s_m_task(void *sensor_param) {
 void app_main(void) {
   esp_err_t err;
   esp_chip_info_t chip_info;
-  apds_3901 *lux_sensor = apds_3901__new();
-  sht_20 *t_rh_sensor = sht_20__new();
-  seesaw_soil *s_m_sensor = seesaw__new();
 
   printf("Hello world!\n");
 
@@ -104,30 +99,31 @@ void app_main(void) {
          (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                        : "external");
 
-  smartconfig__init();
+  init_smartconfig();
 
-  if ((err = i2c__master_init(I2C_NUM_0, I2C_0_SDA_PIN, I2C_0_SCL_PIN)) !=
+  if ((err = init_i2c_master(I2C_NUM_0, I2C_0_SDA_PIN, I2C_0_SCL_PIN)) !=
       ESP_OK) {
     ESP_LOGE(TAG, "Error initializing I2C bus: %s", esp_err_to_name(err));
     return;
   }
 
-  if ((err = apds_3901__init(I2C_NUM_0, APDS_3901_I2C_ADDR, lux_sensor)) != ESP_OK) {
+  if ((err = init_apds_3901(I2C_NUM_0, APDS_3901_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing lux sensor: %s", esp_err_to_name(err));
     // don't return here, sensor can be re-initialized on read
   }
 
-  if ((err = sht_20__init(I2C_NUM_0, t_rh_sensor)) != ESP_OK) {
-    ESP_LOGE(TAG, "Error initializing Temp/Humd sensor: %s", esp_err_to_name(err));
+  if ((err = init_sht_20(I2C_NUM_0)) != ESP_OK) {
+    ESP_LOGE(TAG, "Error initializing Temp/Humd sensor: %s",
+             esp_err_to_name(err));
     // don't return here, sensor can be re-initialized on read
   }
 
-  if ((err = seesaw__init(I2C_NUM_0, SEESAW_I2C_ADDR, s_m_sensor)) != ESP_OK) {
+  if ((err = init_soil_sensor(I2C_NUM_0, SEESAW_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing soil sensor: %s", esp_err_to_name(err));
   }
 
   // read sensors continuously
-  xTaskCreate(&read_lux_task, "read_lux_task", 2048, lux_sensor, 6, NULL);
-  xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, t_rh_sensor, 6, NULL);
-  xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, s_m_sensor, 6, NULL);
+  xTaskCreate(&read_lux_task, "read_lux_task", 2048, NULL, 6, NULL);
+  xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, NULL, 6, NULL);
+  xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, NULL, 6, NULL);
 }
