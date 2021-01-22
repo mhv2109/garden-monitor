@@ -81,6 +81,11 @@ void read_s_m_task(void *sensor_param) {
   vTaskDelete(NULL);
 }
 
+void delayed_restart(void) {
+  vTaskDelay(pdMS_TO_TICKS(5000));
+  esp_restart();
+}
+
 void app_main(void) {
   esp_err_t err;
   esp_chip_info_t chip_info;
@@ -104,22 +109,23 @@ void app_main(void) {
   if ((err = i2c__master_init(I2C_NUM_0, I2C_0_SDA_PIN, I2C_0_SCL_PIN)) !=
       ESP_OK) {
     ESP_LOGE(TAG, "Error initializing I2C bus: %s", esp_err_to_name(err));
-    return;
+    delayed_restart();
   }
 
   if ((err = init_apds_3901(I2C_NUM_0, APDS_3901_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing lux sensor: %s", esp_err_to_name(err));
-    // don't return here, sensor can be re-initialized on read
+    delayed_restart();
   }
 
   if ((err = init_sht_20(I2C_NUM_0)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing Temp/Humd sensor: %s",
              esp_err_to_name(err));
-    // don't return here, sensor can be re-initialized on read
+    delayed_restart();
   }
 
   if ((err = init_soil_sensor(I2C_NUM_0, SEESAW_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing soil sensor: %s", esp_err_to_name(err));
+    delayed_restart();
   }
 
   // read sensors continuously

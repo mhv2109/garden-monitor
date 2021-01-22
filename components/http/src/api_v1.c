@@ -1,4 +1,7 @@
 #include "../private/api_v1.h"
+#include "apds_3901.h"
+#include "seesaw_soil.h"
+#include "sht_20.h"
 #include "esp_err.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
@@ -7,42 +10,94 @@
 #define API_BASE "/api/v1/"
 #define API_PATH(resource) strcat(API_BASE, resource)
 
+#define TEMP "temperature"
+#define HUMD "humidity"
+#define MOIST "soil-moisture"
+#define LUX "lux"
+#define ERROR "error"
+
+const char *TAG = "REST API v1";
+
 static esp_err_t get_temp_handler(httpd_req_t *req) {
-  esp_err_t err = ESP_OK;
-  return err;
+  esp_err_t err;
+  float temp;
+  char buf[256] = {0};
+
+  if ((err = read_temp(&temp)) == ESP_OK) {
+    sprintf(buf, "{\"%s\":%f}", TEMP, temp);
+  } else {
+    ESP_LOGE(TAG, "Error returning current temperature: %s", esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+  }
+
+  httpd_resp_set_type(req, HTTPD_TYPE_JSON);
+  return httpd_resp_send(req, buf, HTTPD_RESP_USE_STRLEN);
 }
 
 static esp_err_t get_humd_handler(httpd_req_t *req) {
-  esp_err_t err = ESP_OK;
-  return err;
+  esp_err_t err;
+  float humd;
+  char buf[256] = {0};
+
+  if ((err = read_rel_humd(&humd)) == ESP_OK) {
+    sprintf(buf, "{\"%s\":%f}", HUMD, humd);
+  } else {
+    ESP_LOGE(TAG, "Error returning current relative humidity: %s", esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+  }
+
+  httpd_resp_set_type(req, HTTPD_TYPE_JSON);
+  return httpd_resp_send(req, buf, HTTPD_RESP_USE_STRLEN);
 }
 
 static esp_err_t get_moist_handler(httpd_req_t *req) {
-  esp_err_t err = ESP_OK;
-  return err;
+  esp_err_t err;
+  uint16_t moist;
+  char buf[256] = {0};
+
+  if ((err = read_soil_moisture(&moist)) == ESP_OK) {
+    sprintf(buf, "{\"%s\":%u}", MOIST, moist);
+  } else {
+    ESP_LOGE(TAG, "Error returning soil moisture: %s", esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+  }
+
+  httpd_resp_set_type(req, HTTPD_TYPE_JSON);
+  return httpd_resp_send(req, buf, HTTPD_RESP_USE_STRLEN);
 }
 
 static esp_err_t get_lux_handler(httpd_req_t *req) {
-  esp_err_t err = ESP_OK;
-  return err;
+  esp_err_t err;
+  float lux;
+  char buf[256] = {0};
+
+  if ((err = read_lux(&lux)) == ESP_OK) {
+    sprintf(buf, "{\"%s\":%f}", LUX, lux);
+  } else {
+    ESP_LOGE(TAG, "Error returning lux: %s", esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+  }
+
+  httpd_resp_set_type(req, HTTPD_TYPE_JSON);
+  return httpd_resp_send(req, buf, HTTPD_RESP_USE_STRLEN);
 }
 
-static const httpd_uri_t get_temp = {.uri = API_PATH("temp"),
+static const httpd_uri_t get_temp = {.uri = API_PATH(TEMP),
                                      .method = HTTP_GET,
                                      .handler = get_temp_handler,
                                      .user_ctx = NULL};
 
-static const httpd_uri_t get_humd = {.uri = API_PATH("humd"),
+static const httpd_uri_t get_humd = {.uri = API_PATH(HUMD),
                                      .method = HTTP_GET,
                                      .handler = get_humd_handler,
                                      .user_ctx = NULL};
 
-static const httpd_uri_t get_moist = {.uri = API_PATH("moist"),
+static const httpd_uri_t get_moist = {.uri = API_PATH(MOIST),
                                       .method = HTTP_GET,
                                       .handler = get_moist_handler,
                                       .user_ctx = NULL};
 
-static const httpd_uri_t get_lux = {.uri = API_PATH("lux"),
+static const httpd_uri_t get_lux = {.uri = API_PATH(LUX),
                                     .method = HTTP_GET,
                                     .handler = get_lux_handler,
                                     .user_ctx = NULL};
