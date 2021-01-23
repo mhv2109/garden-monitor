@@ -8,7 +8,6 @@
 #include <string.h>
 
 #define API_BASE "/api/v1/"
-#define API_PATH(resource) strcat(API_BASE, resource)
 
 #define TEMP "temperature"
 #define HUMD "humidity"
@@ -82,22 +81,22 @@ static esp_err_t get_lux_handler(httpd_req_t *req) {
   return httpd_resp_send(req, buf, HTTPD_RESP_USE_STRLEN);
 }
 
-static const httpd_uri_t get_temp = {.uri = API_PATH(TEMP),
+static const httpd_uri_t get_temp = {.uri = API_BASE TEMP,
                                      .method = HTTP_GET,
                                      .handler = get_temp_handler,
                                      .user_ctx = NULL};
 
-static const httpd_uri_t get_humd = {.uri = API_PATH(HUMD),
+static const httpd_uri_t get_humd = {.uri = API_BASE HUMD,
                                      .method = HTTP_GET,
                                      .handler = get_humd_handler,
                                      .user_ctx = NULL};
 
-static const httpd_uri_t get_moist = {.uri = API_PATH(MOIST),
+static const httpd_uri_t get_moist = {.uri = API_BASE MOIST,
                                       .method = HTTP_GET,
                                       .handler = get_moist_handler,
                                       .user_ctx = NULL};
 
-static const httpd_uri_t get_lux = {.uri = API_PATH(LUX),
+static const httpd_uri_t get_lux = {.uri = API_BASE LUX,
                                     .method = HTTP_GET,
                                     .handler = get_lux_handler,
                                     .user_ctx = NULL};

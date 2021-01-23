@@ -17,6 +17,7 @@
 #include "sht_20.h"
 #include "smartconfig.h"
 #include "wifi.h"
+#include "http.h"
 
 #define I2C_0_SDA_PIN GPIO_NUM_15
 #define I2C_0_SCL_PIN GPIO_NUM_2
@@ -129,7 +130,10 @@ void app_main(void) {
   }
 
   // read sensors continuously
-  xTaskCreate(&read_lux_task, "read_lux_task", 2048, NULL, 6, NULL);
-  xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, NULL, 6, NULL);
-  xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, NULL, 6, NULL);
+  //xTaskCreate(&read_lux_task, "read_lux_task", 2048, NULL, 6, NULL);
+  //xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, NULL, 6, NULL);
+  //xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, NULL, 6, NULL);
+
+  // start http_server
+  start_http_server();
 }

@@ -17,17 +17,15 @@ esp_err_t start_http_server(void) {
   /* Generate default configuration */
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-  /* Local handler to esp_http_server */
-  httpd_handle_t handle_ = NULL;
-
   /* Start the httpd server */
-  if ((err = httpd_start(&handle_, &config)) == ESP_OK) {
+  if ((err = httpd_start(&handle, &config)) == ESP_OK) {
     /* Register handlers */
-    api_v1__register_handlers(handle_);
+    api_v1__register_handlers(handle);
     /* Set global server var */
-    handle = handle_;
     ESP_LOGI(TAG, "Server started");
   } else {
+    httpd_stop(handle);
+    handle = NULL;
     ESP_LOGE(TAG, "Error starting server: %s", esp_err_to_name(err));
   }
 
