@@ -4,6 +4,7 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_wpa2.h"
+#include "esp_sntp.h"
 
 #include "nvs.h"
 
@@ -49,6 +50,10 @@ static void ip_event_handler(void *arg, esp_event_base_t event_base,
     switch (event_id) {
     case IP_EVENT_STA_GOT_IP:
       ESP_LOGI(TAG, "Network connected, IP address assigned");
+      // setup ntp server
+      sntp_setoperatingmode(SNTP_OPMODE_POLL);
+      sntp_setservername(0, "pool.ntp.org");
+      sntp_init();
       break;
     default:
       break;

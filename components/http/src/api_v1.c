@@ -5,7 +5,12 @@
 #include "esp_err.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+#define BUF_LEN 128
+#define ISO_8601_LEN 32
 
 #define API_BASE "/api/v1/"
 
@@ -14,19 +19,29 @@
 #define MOIST "soil-moisture"
 #define LUX "lux"
 #define ERROR "error"
+#define TIME "timestamp"
 
 const char *TAG = "REST API v1";
+
+void get_utc_iso_8601(char *t) {
+  time_t now = time(&now);
+  struct tm *gmt = gmtime(&now);
+  strftime(t, ISO_8601_LEN, "%FT%TZ", gmt);
+}
 
 static esp_err_t get_temp_handler(httpd_req_t *req) {
   esp_err_t err;
   float temp;
-  char buf[256] = {0};
+  char ts[ISO_8601_LEN] = {0};
+  char buf[BUF_LEN] = {0};
+
+  get_utc_iso_8601(ts);
 
   if ((err = read_temp(&temp)) == ESP_OK) {
-    sprintf(buf, "{\"%s\":%f}", TEMP, temp);
+    sprintf(buf, "{\"%s\":%f,\"%s\":\"%s\"}", TEMP, temp, TIME, ts);
   } else {
     ESP_LOGE(TAG, "Error returning current temperature: %s", esp_err_to_name(err));
-    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\",\"%s\":\"%s\"}", ERROR, esp_err_to_name(err), TIME, ts);
   }
 
   httpd_resp_set_type(req, HTTPD_TYPE_JSON);
@@ -36,13 +51,16 @@ static esp_err_t get_temp_handler(httpd_req_t *req) {
 static esp_err_t get_humd_handler(httpd_req_t *req) {
   esp_err_t err;
   float humd;
-  char buf[256] = {0};
+  char ts[ISO_8601_LEN] = {0};
+  char buf[BUF_LEN] = {0};
+
+  get_utc_iso_8601(ts);
 
   if ((err = read_rel_humd(&humd)) == ESP_OK) {
-    sprintf(buf, "{\"%s\":%f}", HUMD, humd);
+    sprintf(buf, "{\"%s\":%f,\"%s\":\"%s\"}", HUMD, humd, TIME, ts);
   } else {
     ESP_LOGE(TAG, "Error returning current relative humidity: %s", esp_err_to_name(err));
-    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\",\"%s\":\"%s\"}", ERROR, esp_err_to_name(err), TIME, ts);
   }
 
   httpd_resp_set_type(req, HTTPD_TYPE_JSON);
@@ -52,13 +70,16 @@ static esp_err_t get_humd_handler(httpd_req_t *req) {
 static esp_err_t get_moist_handler(httpd_req_t *req) {
   esp_err_t err;
   uint16_t moist;
-  char buf[256] = {0};
+  char ts[ISO_8601_LEN] = {0};
+  char buf[BUF_LEN] = {0};
+
+  get_utc_iso_8601(ts);
 
   if ((err = read_soil_moisture(&moist)) == ESP_OK) {
-    sprintf(buf, "{\"%s\":%u}", MOIST, moist);
+    sprintf(buf, "{\"%s\":%u,\"%s\":\"%s\"}", MOIST, moist, TIME, ts);
   } else {
     ESP_LOGE(TAG, "Error returning soil moisture: %s", esp_err_to_name(err));
-    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\",\"%s\":\"%s\"}", ERROR, esp_err_to_name(err), TIME, ts);
   }
 
   httpd_resp_set_type(req, HTTPD_TYPE_JSON);
@@ -68,13 +89,16 @@ static esp_err_t get_moist_handler(httpd_req_t *req) {
 static esp_err_t get_lux_handler(httpd_req_t *req) {
   esp_err_t err;
   float lux;
-  char buf[256] = {0};
+  char ts[ISO_8601_LEN] = {0};
+  char buf[BUF_LEN] = {0};
+
+  get_utc_iso_8601(ts);
 
   if ((err = read_lux(&lux)) == ESP_OK) {
-    sprintf(buf, "{\"%s\":%f}", LUX, lux);
+    sprintf(buf, "{\"%s\":%f,\"%s\":\"%s\"}", LUX, lux, TIME, ts);
   } else {
     ESP_LOGE(TAG, "Error returning lux: %s", esp_err_to_name(err));
-    sprintf(buf, "{\"%s\":\"%s\"}", ERROR, esp_err_to_name(err));
+    sprintf(buf, "{\"%s\":\"%s\",\"%s\":\"%s\"}", ERROR, esp_err_to_name(err), TIME, ts);
   }
 
   httpd_resp_set_type(req, HTTPD_TYPE_JSON);
