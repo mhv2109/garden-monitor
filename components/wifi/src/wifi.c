@@ -20,6 +20,17 @@ static SemaphoreHandle_t wifi_mutex;
 interacting with the WiFi/network stack */
 static bool WIFI_INIT = false;
 
+/* WiFi connected? */
+static bool WIFI_CONN = false;
+
+/**
+ * @brief Is WiFi connected?
+ * @return WiFi connected
+ */
+bool wifi__connected(void) {
+  return WIFI_CONN;
+}
+
 /**
  * @brief Connect to WiFi using the provided config.
  * @param config ESP-IDF WiFi config with ssid, password, and bssid set
@@ -54,6 +65,8 @@ static void ip_event_handler(void *arg, esp_event_base_t event_base,
       sntp_setoperatingmode(SNTP_OPMODE_POLL);
       sntp_setservername(0, "pool.ntp.org");
       sntp_init();
+      // wifi successfully connected
+      WIFI_CONN = true;
       break;
     default:
       break;
@@ -69,6 +82,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
       ESP_LOGI(TAG, "WiFi started");
       break;
     case WIFI_EVENT_STA_DISCONNECTED:
+      WIFI_CONN = false;
       ESP_LOGI(TAG, "WiFi disconnected");
       esp_wifi_connect();
       break;
