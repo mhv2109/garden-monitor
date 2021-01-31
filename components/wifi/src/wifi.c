@@ -7,9 +7,10 @@
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
 #include "esp_wpa2.h"
-#include "nvs_flash.h"
+#include "esp_sntp.h"
 
 #include "../include/wifi.h"
+#include "nvs.h"
 
 // Config constants
 #define WIFI_SSID CONFIG_WIFI_SSID
@@ -25,6 +26,10 @@ static void ip_event_handler(void *arg, esp_event_base_t event_base,
     switch (event_id) {
     case IP_EVENT_STA_GOT_IP:
       ESP_LOGI(TAG, "Network connected, IP address assigned");
+      // setup ntp server
+      sntp_setoperatingmode(SNTP_OPMODE_POLL);
+      sntp_setservername(0, "pool.ntp.org");
+      sntp_init();
       break;
     case IP_EVENT_STA_LOST_IP:
       ESP_LOGW(TAG, "Network disconnected, IP address lost");
@@ -62,18 +67,6 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
   }
 }
 
-static void init_nvs(void) {
-  esp_err_t err;
-
-  err = nvs_flash_init();
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    err = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(err);
-}
-
 /**
  * @brief Initialize ESP32 WiFi system.
  * @note Panics on failure.
@@ -85,7 +78,7 @@ void init_wifi(void) {
   init_nvs();
 
   ESP_ERROR_CHECK(esp_netif_init());
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
+  esp_event_loop_create_default(); // may or may not already be initialized
   esp_netif_create_default_wifi_sta();
 
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();

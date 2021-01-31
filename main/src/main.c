@@ -15,6 +15,7 @@
 #include "seesaw_soil.h"
 #include "sht_20.h"
 #include "wifi.h"
+#include "mqtt.h"
 
 #define I2C_0_SDA_PIN GPIO_NUM_15
 #define I2C_0_SCL_PIN GPIO_NUM_2
@@ -24,60 +25,6 @@
 #define SEESAW_I2C_ADDR 0x36
 
 static const char *TAG = "ESP32 Garden Monitor";
-
-void read_lux_task(void *sensor_param) {
-  esp_err_t err;
-  float lux;
-
-  for (;;) {
-    if ((err = read_lux(&lux)) == ESP_OK)
-      ESP_LOGI(TAG, "Lux reading: %f", lux);
-    else
-      ESP_LOGW(TAG, "Error reading lux: %s", esp_err_to_name(err));
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-
-  vTaskDelete(NULL);
-}
-
-void read_t_rh_task(void *sensor_param) {
-  esp_err_t err;
-  float temp, humd;
-
-  for (;;) {
-    if ((err = read_temp(&temp)) == ESP_OK)
-      ESP_LOGI(TAG, "Temperature reading (C): %f", temp);
-    else
-      ESP_LOGW(TAG, "Error reading temperature: %s", esp_err_to_name(err));
-
-    if ((err = read_rel_humd(&humd)) == ESP_OK)
-      ESP_LOGI(TAG, "Relative humidity reading: %f", humd);
-    else
-      ESP_LOGW(TAG, "Error reading relative humidity: %s",
-               esp_err_to_name(err));
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-
-  vTaskDelete(NULL);
-}
-
-void read_s_m_task(void *sensor_param) {
-  esp_err_t err;
-  uint16_t moist;
-
-  for (;;) {
-    if ((err = read_soil_moisture(&moist)) == ESP_OK)
-      ESP_LOGI(TAG, "Soil moisture reading: %u", moist);
-    else
-      ESP_LOGW(TAG, "Error reading soil moisture: %s", esp_err_to_name(err));
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-
-  vTaskDelete(NULL);
-}
 
 void read_sensors(void) {
   esp_err_t err;
@@ -106,10 +53,8 @@ void read_sensors(void) {
     // don't return here, sensor can be re-initialized on read
   }
 
-  // read sensors continuously
-  xTaskCreate(&read_lux_task, "read_lux_task", 2048, NULL, 6, NULL);
-  xTaskCreate(&read_t_rh_task, "read_t_rh_task", 2048, NULL, 6, NULL);
-  xTaskCreate(&read_s_m_task, "read_s_m_task", 2048, NULL, 6, NULL);
+  // read and publish sensor readings continuously
+  mqtt_publish_all();
 }
 
 void app_main(void) {
