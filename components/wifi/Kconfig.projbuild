@@ -1,0 +1,15 @@
+menu "Garden Monitor WiFi Configuration"
+
+config WIFI_SSID
+       string "WiFi SSID"
+       default "myssid"
+       help
+        WiFi SSID to connect to
+
+config WIFI_PASS
+       string "WiFi Password"
+       default "mypassword"
+       help
+        WiFi password to use
+
+endmenu
