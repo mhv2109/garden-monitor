@@ -1,0 +1,33 @@
+menu "Garden Monitor MQTT Configuration"
+
+config MQTT_BROKER_URI
+       string "MQTT Broker URI"
+       default "mqtt://username:password@mqtt.eclipse.org:1883"
+       help
+        Full URI to MQTT Broker including IP address, port, and username & password (if necessary)
+
+config MQTT_TEMPERATURE_TOPIC
+       string "Temperature topic"
+       default "garden/monitor/temperature"
+       help
+        MQTT topic for temperature readings
+
+config MQTT_HUMIDITY_TOPIC
+       string "Humidity topic"
+       default "garden/monitor/humidity"
+       help
+        MQTT topic for humidity readings
+
+config MQTT_LUX_TOPIC
+       string "Lux topic"
+       default "garden/monitor/lux"
+       help
+        MQTT topic for lux light intesnsity (lux) readings
+
+config MQTT_SOIL_MOISTURE_TOPIC
+       string "Soil moisture topic"
+       default "garden/monitor/soil_moisture"
+       help
+        MQTT topic for soil moisture readings
+
+endmenu
