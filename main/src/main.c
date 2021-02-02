@@ -1,6 +1,7 @@
 #include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "esp_pm.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -71,6 +72,15 @@ void app_main(void) {
   printf("%uMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
          (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded"
                                                        : "external");
+
+  #if CONFIG_PM_ENABLE
+  esp_pm_config_esp32_t pm_config = {
+      .max_freq_mhz = CONFIG_MAX_CPU_FREQ_MHZ,
+      .min_freq_mhz = CONFIG_MIN_CPU_FREQ_MHZ,
+      .light_sleep_enable = false,
+  };
+  ESP_ERROR_CHECK(esp_pm_configure(&pm_config));
+  #endif
 
   init_wifi();
   read_sensors();

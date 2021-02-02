@@ -15,6 +15,19 @@
 // Config constants
 #define WIFI_SSID CONFIG_WIFI_SSID
 #define WIFI_PASS CONFIG_WIFI_PASS
+
+#define LISTEN_INTERVAL CONFIG_WIFI_LISTEN_INTERVAL
+
+#if CONFIG_POWER_SAVE_MIN_MODEM
+#define PS_MODE WIFI_PS_MIN_MODEM
+#elif CONFIG_POWER_SAVE_MAX_MODEM
+#define PS_MODE WIFI_PS_MAX_MODEM
+#elif CONFIG_POWER_SAVE_NONE
+#define PS_MODE WIFI_PS_NONE
+#else
+#define PS_MODE WIFI_PS_NONE
+#endif
+
 static const char *TAG = "wifi_component";
 
 // Global vars
@@ -95,6 +108,7 @@ void init_wifi(void) {
       .sta = {.ssid = WIFI_SSID,
               .password = WIFI_PASS,
               .scan_method = WIFI_ALL_CHANNEL_SCAN,
+              .listen_interval = LISTEN_INTERVAL,
               .pmf_cfg = {.capable = true, .required = false},
               .threshold.authmode = WIFI_AUTH_WPA2_PSK},
   };
@@ -102,6 +116,7 @@ void init_wifi(void) {
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
   ESP_ERROR_CHECK(esp_wifi_start());
+  ESP_ERROR_CHECK(esp_wifi_set_ps(PS_MODE));
 
   WIFI_INIT = true;
 }
