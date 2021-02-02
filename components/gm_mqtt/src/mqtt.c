@@ -40,7 +40,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event) {
     ESP_LOGW(TAG, "Disconnected from MQTT broker");
     break;
   case MQTT_EVENT_PUBLISHED:
-    ESP_LOGD(TAG, "Published event, message id: %d, message data: \"%s\"", event->msg_id, event->data);
+    ESP_LOGD(TAG, "Published event, message id: %d", event->msg_id);
     break;
   case MQTT_EVENT_ERROR:
     ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
@@ -114,7 +114,7 @@ static void read_temp_task(void *client) {
   for (;;) {
     if ((err = read_temp(&temp)) == ESP_OK) {
       json_float(payload, TEMPERATURE, temp);
-      if (esp_mqtt_client_publish(client, TEMP_TOPIC, payload, 0, 0, 1) < 0)
+      if (esp_mqtt_client_publish(client, TEMP_TOPIC, payload, 0, 1, 1) < 0)
         ESP_LOGW(TAG, "Error publishing temperature message");
     } else {
       ESP_LOGE(TAG, "Error reading temperature: %s", esp_err_to_name(err));
@@ -149,7 +149,7 @@ static void read_humd_task(void *client) {
   for (;;) {
     if ((err = read_rel_humd(&humd)) == ESP_OK) {
       json_float(payload, HUMIDITY, humd);
-      if (esp_mqtt_client_publish(client, HUMD_TOPIC, payload, 0, 0, 1) < 0)
+      if (esp_mqtt_client_publish(client, HUMD_TOPIC, payload, 0, 1, 1) < 0)
         ESP_LOGW(TAG, "Error publishing humidity message");
     } else {
       ESP_LOGE(TAG, "Error reading humidity: %s", esp_err_to_name(err));
@@ -184,7 +184,7 @@ static void read_lux_task(void *client) {
   for (;;) {
     if ((err = read_lux(&lux)) == ESP_OK) {
       json_float(payload, LUX, lux);
-      if (esp_mqtt_client_publish(client, LUX_TOPIC, payload, 0, 0, 1) < 0)
+      if (esp_mqtt_client_publish(client, LUX_TOPIC, payload, 0, 1, 1) < 0)
         ESP_LOGW(TAG, "Error publishing lux message");
     } else {
       ESP_LOGE(TAG, "Error reading lux: %s", esp_err_to_name(err));
@@ -219,7 +219,7 @@ static void read_soil_moisture_task(void *client) {
   for (;;) {
     if ((err = read_soil_moisture(&moist)) == ESP_OK) {
       json_uint16(payload, SOIL_MOISTURE, moist);
-      if (esp_mqtt_client_publish(client, SOIL_MOISTURE_TOPIC, payload, 0, 0, 1) < 0)
+      if (esp_mqtt_client_publish(client, SOIL_MOISTURE_TOPIC, payload, 0, 1, 1) < 0)
         ESP_LOGW(TAG, "Error publishing soil moisture message");
     } else {
       ESP_LOGE(TAG, "Error reading soil moisture: %s", esp_err_to_name(err));
