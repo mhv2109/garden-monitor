@@ -22,6 +22,7 @@ Project configuration is handled using KConfig, and thus, configs are compile-ti
 To set configurations, run `idf.py menuconfig`
 
 * WiFi configuration [here](./components/wifi/README.md#Configuration)
+* I2C configuration [here](./components/i2c/README.md#Configuration)
 * MQTT broker configuration [here](./components/gm_mqtt/README.md#Configuration)
 
 ## Building

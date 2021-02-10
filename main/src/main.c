@@ -1,4 +1,3 @@
-#include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_pm.h"
@@ -8,7 +7,6 @@
 #include "freertos/portmacro.h"
 #include "freertos/projdefs.h"
 #include "freertos/task.h"
-#include "hal/i2c_types.h"
 #include <stdio.h>
 
 #include "apds_3901.h"
@@ -17,9 +15,6 @@
 #include "sht_20.h"
 #include "wifi.h"
 #include "mqtt.h"
-
-#define I2C_0_SDA_PIN GPIO_NUM_15
-#define I2C_0_SCL_PIN GPIO_NUM_2
 
 /// Configurable I2C addresses
 #define APDS_3901_I2C_ADDR 0x39
@@ -31,25 +26,25 @@ void read_sensors(void) {
   esp_err_t err;
 
   /* Init sensors and read forever */
-  if ((err = init_i2c_master(I2C_NUM_0, I2C_0_SDA_PIN, I2C_0_SCL_PIN)) !=
+  if ((err = init_i2c_master()) !=
       ESP_OK) {
     ESP_LOGE(TAG, "Error initializing I2C bus: %s", esp_err_to_name(err));
     vTaskDelay(pdMS_TO_TICKS(5000));
     return;
   }
 
-  if ((err = init_apds_3901(I2C_NUM_0, APDS_3901_I2C_ADDR)) != ESP_OK) {
+  if ((err = init_apds_3901(I2C_BUS, APDS_3901_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing lux sensor: %s", esp_err_to_name(err));
     // don't return here, sensor can be re-initialized on read
   }
 
-  if ((err = init_sht_20(I2C_NUM_0)) != ESP_OK) {
+  if ((err = init_sht_20(I2C_BUS)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing Temp/Humd sensor: %s",
              esp_err_to_name(err));
     // don't return here, sensor can be re-initialized on read
   }
 
-  if ((err = init_soil_sensor(I2C_NUM_0, SEESAW_I2C_ADDR)) != ESP_OK) {
+  if ((err = init_soil_sensor(I2C_BUS, SEESAW_I2C_ADDR)) != ESP_OK) {
     ESP_LOGE(TAG, "Error initializing soil sensor: %s", esp_err_to_name(err));
     // don't return here, sensor can be re-initialized on read
   }
