@@ -1,0 +1,38 @@
+menu "Garden Monitor I2C Configuration"
+
+    choice SDA_PIN
+        prompt "SDA pin for I2C bus"
+        default SDA_NUM_23
+        help
+            SDA pin for I2C bus, data line for bus used to communicate with peripherals
+
+        config SDA_NUM_2
+            bool "GPIO 2"
+        config SDA_NUM_15
+            bool "GPIO 15"
+        config SDA_NUM_21
+            bool "GPIO 21"
+        config SDA_NUM_22
+            bool "GPIO 22"
+        config SDA_NUM_23
+            bool "GPIO 23"
+    endchoice
+
+    choice SCL_PIN
+        prompt "SCL pin for I2C bus"
+        default SCL_NUM_22
+        help
+            SCL pin for I2C bus, clock line for bus used to communicate with peripherals
+        
+        config SCL_NUM_2
+            bool "GPIO 2"
+        config SCL_NUM_15
+            bool "GPIO 15"
+        config SCL_NUM_21
+            bool "GPIO 21"
+        config SCL_NUM_22
+            bool "GPIO 22"
+        config SCL_NUM_23
+            bool "GPIO 23"
+    endchoice
+endmenu
