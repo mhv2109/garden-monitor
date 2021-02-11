@@ -30,4 +30,10 @@ config MQTT_SOIL_MOISTURE_TOPIC
        help
         MQTT topic for soil moisture readings
 
+config MQTT_BATTERY_VOLTAGE_TOPIC
+        string "Battery voltage topic"
+        default "garden/monitor/battery/voltage"
+        help
+         MQTT topic for battery voltage readings
+
 endmenu

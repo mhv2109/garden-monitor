@@ -3,6 +3,9 @@ sdkconfig
 sdkconfig.old
 .DS_Store
 .cache/
+temp/
+img/
+.python-version
 
 #
 # C
