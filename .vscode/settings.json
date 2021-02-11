@@ -1,6 +1,6 @@
 {
   "C_Cpp.clang_format_style": "Visual Studio",
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "[cpp]": {
     "editor.quickSuggestions": true
   },
@@ -17,5 +17,8 @@
     "string_view": "c",
     "utility": "c",
     "freertos.h": "c"
-  }
+  },
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "python.pythonPath": "/home/marshall/.pyenv/versions/garden-monitor-3.8.5/bin/python"
 }

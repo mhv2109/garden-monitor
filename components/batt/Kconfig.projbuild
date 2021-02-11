@@ -1,0 +1,19 @@
+menu "Garden Monitor Battery Monitor Configuration"
+
+    choice BATT_ADC_CHANNEL
+        prompt "Analog pin for monitoring battery"
+        default BATT_ADC1_CHANNEL_6
+        help
+            Battery voltage is monitored using a voltage splitter circuit & analog measurement pin
+        
+        config BATT_ADC1_CHANNEL_6
+            bool "A2"
+    endchoice
+
+    config BATT_ADC_DEFAULT_VREF
+        int "Default VRef (mV)"
+        default 1100
+        help
+            Find default vref by running `$ espefuse.py --port /dev/ttyUSB0 adc_info`
+
+endmenu
